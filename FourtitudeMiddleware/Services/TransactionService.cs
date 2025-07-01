@@ -72,7 +72,6 @@ namespace FourtitudeMiddleware.Services
                 // Validate signature
                 if (!_partnerService.ValidateSignature(sigParams, sigTimestamp, request.Sig))
                 {
-                    response.Result = 0;
                     response.ResultMessage = "Invalid signature";
                     return response;
                 }
@@ -94,7 +93,6 @@ namespace FourtitudeMiddleware.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing transaction");
-                response.Result = 0;
                 response.ResultMessage = "Internal server error";
                 return response;
             }
