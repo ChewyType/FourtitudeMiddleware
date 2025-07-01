@@ -19,7 +19,7 @@ namespace FourtitudeMiddleware.Dtos
         [Required]
         public long TotalAmount { get; set; }
 
-        public List<ItemRequest>? Items { get; set; }
+        public List<ItemRequest> Items { get; set; }
 
         [Required]
         public string Timestamp { get; set; } = string.Empty;

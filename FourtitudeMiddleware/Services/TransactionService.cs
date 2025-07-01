@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using FourtitudeMiddleware.Dtos;
 using Microsoft.Extensions.Logging;
+using FluentValidation;
 
 namespace FourtitudeMiddleware.Services
 {
@@ -11,13 +12,16 @@ namespace FourtitudeMiddleware.Services
     {
         private readonly IPartnerService _partnerService;
         private readonly ILogger<TransactionService> _logger;
+        private readonly IValidator<SubmitTransactionRequest> _validator;
 
         public TransactionService(
             IPartnerService partnerService, 
-            ILogger<TransactionService> logger)
+            ILogger<TransactionService> logger,
+            IValidator<SubmitTransactionRequest> validator)
         {
             _partnerService = partnerService;
             _logger = logger;
+            _validator = validator;
         }
 
         public ServiceResponse<SubmitTransactionResponse> ProcessTransaction(SubmitTransactionRequest request)
@@ -25,22 +29,11 @@ namespace FourtitudeMiddleware.Services
             var response = new ServiceResponse<SubmitTransactionResponse>();
             try
             {
-                // Validate request
-                if (request == null)
+                // Validate request using FluentValidation
+                var validationResult = _validator.Validate(request);
+                if (!validationResult.IsValid)
                 {
-                    response.ResultMessage = "Invalid request format";
-                    return response;
-                }
-
-                // Validate required fields
-                if (string.IsNullOrEmpty(request.PartnerKey)
-                    || string.IsNullOrEmpty(request.PartnerRefNo)
-                    || string.IsNullOrEmpty(request.PartnerPassword)
-                    || string.IsNullOrEmpty(request.Timestamp)
-                    || string.IsNullOrEmpty(request.Sig)
-                    || request.TotalAmount <= 0)
-                {
-                    response.ResultMessage = "Missing or invalid required fields";
+                    response.ResultMessage = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
                     return response;
                 }
 
@@ -82,23 +75,6 @@ namespace FourtitudeMiddleware.Services
                     response.Result = 0;
                     response.ResultMessage = "Invalid signature";
                     return response;
-                }
-
-                // Validate items if present
-                if (request.Items != null)
-                {
-                    foreach (var item in request.Items)
-                    {
-                        if (string.IsNullOrEmpty(item.PartnerItemRef)
-                            || string.IsNullOrEmpty(item.Name)
-                            || item.Qty <= 0 || item.Qty > 5
-                            || item.UnitPrice <= 0)
-                        {
-                            response.Result = 0;
-                            response.ResultMessage = "Invalid item details";
-                            return response;
-                        }
-                    }
                 }
 
                 // Process transaction (in a real implementation, this would involve more business logic)
