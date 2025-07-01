@@ -10,17 +10,28 @@ namespace FourtitudeMiddleware.Dtos
         {
             // Required fields with custom error messages
             RuleFor(x => x.PartnerKey)
-                .NotEmpty().WithMessage("partnerkey is required.");
+                .NotEmpty()
+                .WithMessage("partnerkey is required.");
+
             RuleFor(x => x.PartnerRefNo)
-                .NotEmpty().WithMessage("partnerrefno is required.");
+                .NotEmpty()
+                .WithMessage("partnerrefno is required.");
+
             RuleFor(x => x.PartnerPassword)
-                .NotEmpty().WithMessage("partnerpassword is required.");
+                .NotEmpty()
+                .WithMessage("partnerpassword is required.");
+
             RuleFor(x => x.Timestamp)
-                .NotEmpty().WithMessage("timestamp is required.");
+                .NotEmpty()
+                .WithMessage("timestamp is required.");
+
             RuleFor(x => x.Sig)
-                .NotEmpty().WithMessage("sig is required.");
+                .NotEmpty()
+                .WithMessage("sig is required.");
+
             RuleFor(x => x.TotalAmount)
-                .GreaterThan(0).WithMessage("totalamount must be greater than 0.");
+                .GreaterThan(0)
+                .WithMessage("totalamount must be greater than 0.");
 
             // If items are provided, totalamount must match sum of itemDetails
             RuleFor(x => x)
@@ -66,10 +77,22 @@ namespace FourtitudeMiddleware.Dtos
     {
         public ItemRequestValidator()
         {
-            RuleFor(x => x.PartnerItemRef).NotEmpty().WithMessage("partneritemref is required.");
-            RuleFor(x => x.Name).NotEmpty().WithMessage("name is required.");
-            RuleFor(x => x.Qty).GreaterThan(0).LessThanOrEqualTo(5).WithMessage("qty must be between 1 and 5.");
-            RuleFor(x => x.UnitPrice).GreaterThan(0).WithMessage("unitprice must be greater than 0.");
+            RuleFor(x => x.PartnerItemRef)
+                .NotEmpty()
+                .WithMessage("partneritemref is required.");
+
+            RuleFor(x => x.Name)
+                .NotEmpty()
+                .WithMessage("name is required.");
+
+            RuleFor(x => x.Qty)
+                .GreaterThan(0)
+                .LessThanOrEqualTo(5)
+                .WithMessage("qty must be between 1 and 5.");
+
+            RuleFor(x => x.UnitPrice)
+                .GreaterThan(0)
+                .WithMessage("unitprice must be greater than 0.");
         }
     }
 } 
