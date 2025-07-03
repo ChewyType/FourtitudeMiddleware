@@ -29,7 +29,7 @@
                 return true;
             }
 
-            public static (long totalDiscount, long finalAmount) CalculateDiscount(long totalAmount)
+            public static (long totalDiscount, long finalAmount, double totalDiscountPercent) CalculateDiscount(long totalAmount)
             {
                 double baseDiscountPercent = 0;
                 if (totalAmount >= 200 && totalAmount <= 500)
@@ -70,7 +70,7 @@
                 long totalDiscount = (long)Math.Round(totalAmount * totalDiscountPercent);
                 long finalAmount = totalAmount - totalDiscount;
 
-                return (totalDiscount, finalAmount);
+                return (totalDiscount, finalAmount, totalDiscountPercent);
             }
         }
     }
