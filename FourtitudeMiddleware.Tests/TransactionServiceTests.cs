@@ -152,5 +152,40 @@ namespace FourtitudeMiddleware.Tests
                 Assert.That(result.ResultMessage, Does.Contain("PartnerKey is required"));
             });
         }
+
+        [TestCase(100, 0, 100)]
+        [TestCase(300, 15, 285)] // 5% discount
+        [TestCase(600, 42, 558)] // 7% discount
+        [TestCase(1000, 100, 900)] // 10% discount
+        [TestCase(1300, 195, 1105)] // 15% discount
+        [TestCase(997, 200, 797)] // 10% base + 10% ends with 5 (not prime, not ends with 5, but let's check logic)
+        [TestCase(1005, 201, 804)] // 10% base + 10% ends with 5
+        public void ProcessTransaction_DiscountCalculation_Works(long totalAmount, long expectedDiscount, long expectedFinal)
+        {
+            // Arrange
+            var request = new SubmitTransactionRequest
+            {
+                PartnerKey = "FG-00001",
+                PartnerRefNo = "FG-00001",
+                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
+                TotalAmount = totalAmount,
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Sig = "validsig"
+            };
+            _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
+            _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(true);
+            _partnerServiceMock.Setup(p => p.ValidateSignature(It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), request.Sig)).Returns(true);
+
+            // Act
+            var result = _transactionService.ProcessTransaction(request);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Result, Is.EqualTo(1));
+                Assert.That(result.TotalDiscount, Is.EqualTo(expectedDiscount));
+                Assert.That(result.FinalAmount, Is.EqualTo(expectedFinal));
+            });
+        }
     }
 } 
