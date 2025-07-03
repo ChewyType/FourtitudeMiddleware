@@ -7,11 +7,14 @@ using Microsoft.Extensions.Logging;
 using FluentValidation;
 using FourtitudeMiddleware.Services;
 using static FourtitudeMiddleware.Helpers.NumberHelpers;
+using log4net;
+using System.Reflection;
 
 namespace FourtitudeMiddleware.Services
 {
     public class TransactionService : ITransactionService
     {
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         private readonly IPartnerService _partnerService;
         private readonly ILogger<TransactionService> _logger;
         private readonly IValidator<SubmitTransactionRequest> _validator;
@@ -24,6 +27,7 @@ namespace FourtitudeMiddleware.Services
             _partnerService = partnerService;
             _logger = logger;
             _validator = validator;
+            log4net.Config.XmlConfigurator.Configure();
         }
 
         public ServiceResponse<SubmitTransactionResponse> ProcessTransaction(SubmitTransactionRequest request)
@@ -31,11 +35,16 @@ namespace FourtitudeMiddleware.Services
             var response = new ServiceResponse<SubmitTransactionResponse>();
             try
             {
+                // Clone and encrypt password for logging
+                var logRequest = CloneAndEncryptPassword(request);
+                log.Info($"Request: {JsonSerializer.Serialize(logRequest)}");
+
                 // Validate request using FluentValidation
                 var validationResult = _validator.Validate(request);
                 if (!validationResult.IsValid)
                 {
                     response.ResultMessage = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                    log.Warn($"Validation failed: {response.ResultMessage}");
                     return response;
                 }
 
@@ -43,6 +52,7 @@ namespace FourtitudeMiddleware.Services
                 if (!_partnerService.ValidatePartner(request.PartnerKey, request.PartnerPassword))
                 {
                     response.ResultMessage = "Invalid partner credentials";
+                    log.Warn($"Invalid partner credentials for PartnerKey: {request.PartnerKey}");
                     return response;
                 }
 
@@ -50,6 +60,7 @@ namespace FourtitudeMiddleware.Services
                 if (!DateTime.TryParse(request.Timestamp, out _))
                 {
                     response.ResultMessage = "Invalid timestamp format";
+                    log.Warn($"Invalid timestamp format: {request.Timestamp}");
                     return response;
                 }
 
@@ -75,6 +86,7 @@ namespace FourtitudeMiddleware.Services
                 if (!_partnerService.ValidateSignature(sigParams, sigTimestamp, request.Sig))
                 {
                     response.ResultMessage = "Invalid signature";
+                    log.Warn($"Invalid signature for PartnerKey: {request.PartnerKey}");
                     return response;
                 }
 
@@ -85,11 +97,13 @@ namespace FourtitudeMiddleware.Services
                 ApplyDiscounts(transactionResponse, totalAmount);
 
                 response.Data = transactionResponse;
+                log.Info($"Response: {JsonSerializer.Serialize(response)}");
                 return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing transaction");
+                log.Error("Error processing transaction", ex);
                 response.ResultMessage = "Internal server error";
                 return response;
             }
@@ -140,6 +154,29 @@ namespace FourtitudeMiddleware.Services
             response.TotalAmount = totalAmount;
             response.TotalDiscount = totalDiscount;
             response.FinalAmount = finalAmount;
+        }
+
+        // Helper method to clone request and encrypt password for logging
+        private SubmitTransactionRequest CloneAndEncryptPassword(SubmitTransactionRequest request)
+        {
+            return new SubmitTransactionRequest
+            {
+                PartnerKey = request.PartnerKey,
+                PartnerRefNo = request.PartnerRefNo,
+                PartnerPassword = EncryptForLog(request.PartnerPassword),
+                TotalAmount = request.TotalAmount,
+                Items = request.Items,
+                Timestamp = request.Timestamp,
+                Sig = request.Sig
+            };
+        }
+
+        // Simple encryption for logging (for demonstration, use a real encryption in production)
+        private string EncryptForLog(string plainText)
+        {
+            if (string.IsNullOrEmpty(plainText)) return string.Empty;
+            var plainBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return Convert.ToBase64String(plainBytes.Reverse().ToArray()); // Simple reverse + base64
         }
     }
 } 

@@ -1,8 +1,17 @@
 using FluentValidation;
 using FourtitudeMiddleware.Dtos;
 using FourtitudeMiddleware.Services;
+using log4net;
+using log4net.Config;
+using System.IO;
+using System.Reflection;
+using FourtitudeMiddleware.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// log4net configuration
+var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
 
 // Add services to the container.
 
@@ -27,6 +36,8 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+
+app.UseRequestResponseLogging();
 
 app.UseAuthorization();
 
