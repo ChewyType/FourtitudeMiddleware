@@ -25,6 +25,11 @@ namespace FourtitudeMiddleware.Dtos
                 {
                     _result = 0;
                 }
+
+                if (Data != null)
+                {
+                    _result = 1;
+                }
             }
         }
 

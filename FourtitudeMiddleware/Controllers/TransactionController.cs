@@ -18,10 +18,10 @@ namespace FourtitudeMiddleware.Controllers
         }
 
         [HttpPost("submittrxmessage")]
-        public ActionResult<ServiceResponse<SubmitTransactionResponse>> SubmitTransaction(SubmitTransactionRequest request)
+        public ActionResult<SubmitTransactionResponse> SubmitTransaction(SubmitTransactionRequest request)
         {
-            var serviceResponse = _transactionService.ProcessTransaction(request);
-            return HandleServiceResponse(serviceResponse);
+            var response = _transactionService.ProcessTransaction(request);
+            return HandleResponse<SubmitTransactionResponse>(response);
         }
     }
 }

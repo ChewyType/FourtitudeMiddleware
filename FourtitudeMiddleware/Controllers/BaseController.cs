@@ -36,15 +36,27 @@ namespace FourtitudeMiddleware.Controllers
             return StatusCode(statusCode, response);
         }
 
-        protected ActionResult<ServiceResponse<T>> HandleServiceResponse<T>(ServiceResponse<T> serviceResponse)
+        protected ActionResult<T> HandleResponse<T>(T response)
+            where T : class
         {
-            if (serviceResponse.Result == 1)
+            var resultProp = typeof(T).GetProperty("Result");
+            var messageProp = typeof(T).GetProperty("ResultMessage");
+            var resultValue = resultProp?.GetValue(response);
+            bool isSuccess = resultValue is int r && r == 1;
+
+            if (isSuccess)
             {
-                return SuccessResponse(serviceResponse);
+                if (messageProp != null)
+                    messageProp.SetValue(response, null);
+                return StatusCode(200, response);
             }
             else
             {
-                return ErrorResponse<ServiceResponse<T>>(serviceResponse.ResultMessage);
+                if (resultProp != null)
+                    resultProp.SetValue(response, 0);
+                if (messageProp != null && messageProp.GetValue(response) == null)
+                    messageProp.SetValue(response, "An error occurred.");
+                return StatusCode(400, response);
             }
         }
     }

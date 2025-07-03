@@ -48,26 +48,26 @@ namespace FourtitudeMiddleware.Dtos
                 });
 
             // Timestamp must be within ±5 minutes of server time
-            RuleFor(x => x.Timestamp)
-                .Custom((timestamp, context) =>
-                {
-                    if (!string.IsNullOrEmpty(timestamp))
-                    {
-                        if (DateTime.TryParse(timestamp, out var parsedTimestamp))
-                        {
-                            var now = DateTime.UtcNow;
-                            var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
-                            if (diff > 5)
-                            {
-                                context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:dd MMM yyyy HH:mm:ss}");
-                            }
-                        }
-                        else
-                        {
-                            context.AddFailure("timestamp", "Invalid timestamp format.");
-                        }
-                    }
-                });
+            //RuleFor(x => x.Timestamp)
+            //    .Custom((timestamp, context) =>
+            //    {
+            //        if (!string.IsNullOrEmpty(timestamp))
+            //        {
+            //            if (DateTime.TryParse(timestamp, out var parsedTimestamp))
+            //            {
+            //                var now = DateTime.UtcNow;
+            //                var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
+            //                if (diff > 5)
+            //                {
+            //                    context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:dd MMM yyyy HH:mm:ss}");
+            //                }
+            //            }
+            //            else
+            //            {
+            //                context.AddFailure("timestamp", "Invalid timestamp format.");
+            //            }
+            //        }
+            //    });
 
             RuleForEach(x => x.Items).SetValidator(new ItemRequestValidator());
         }
