@@ -5,6 +5,8 @@ using System.Text.Json;
 using FourtitudeMiddleware.Dtos;
 using Microsoft.Extensions.Logging;
 using FluentValidation;
+using FourtitudeMiddleware.Services;
+using static FourtitudeMiddleware.Helpers.NumberHelpers;
 
 namespace FourtitudeMiddleware.Services
 {
@@ -78,16 +80,11 @@ namespace FourtitudeMiddleware.Services
 
                 // Process transaction (in a real implementation, this would involve more business logic)
                 long totalAmount = request.TotalAmount;
-                long totalDiscount = 0; // In a real scenario, this would be calculated based on business rules
-                long finalAmount = totalAmount - totalDiscount;
 
-                response.Result = 1;
-                response.Data = new SubmitTransactionResponse
-                {
-                    TotalAmount = totalAmount,
-                    TotalDiscount = totalDiscount,
-                    FinalAmount = finalAmount
-                };
+                var transactionResponse = new SubmitTransactionResponse();
+                ApplyDiscounts(transactionResponse, totalAmount);
+
+                response.Data = transactionResponse;
                 return response;
             }
             catch (Exception ex)
@@ -96,6 +93,53 @@ namespace FourtitudeMiddleware.Services
                 response.ResultMessage = "Internal server error";
                 return response;
             }
+        }
+
+        // Helper method for discount calculation
+        private void ApplyDiscounts(SubmitTransactionResponse response, long totalAmount)
+        {
+            double baseDiscountPercent = 0;
+            if (totalAmount >= 200 && totalAmount <= 500)
+            {
+                baseDiscountPercent = 0.05;
+            }
+            else if (totalAmount >= 501 && totalAmount <= 800)
+            {
+                baseDiscountPercent = 0.07;
+            }
+            else if (totalAmount >= 801 && totalAmount <= 1200)
+            {
+                baseDiscountPercent = 0.10;
+            }
+            else if (totalAmount > 1200)
+            {
+                baseDiscountPercent = 0.15;
+            }
+
+            double conditionalDiscountPercent = 0;
+            // Prime number check (above 500)
+            if (totalAmount > 500 && NumberHelper.IsPrime(totalAmount))
+            {
+                conditionalDiscountPercent += 0.08;
+            }
+            // Ends with 5 and above 900
+            if (totalAmount > 900 && totalAmount % 10 == 5)
+            {
+                conditionalDiscountPercent += 0.10;
+            }
+
+            double totalDiscountPercent = baseDiscountPercent + conditionalDiscountPercent;
+            if (totalDiscountPercent > 0.20)
+            {
+                totalDiscountPercent = 0.20;
+            }
+
+            long totalDiscount = (long)Math.Round(totalAmount * totalDiscountPercent);
+            long finalAmount = totalAmount - totalDiscount;
+
+            response.TotalAmount = totalAmount;
+            response.TotalDiscount = totalDiscount;
+            response.FinalAmount = finalAmount;
         }
     }
 } 
