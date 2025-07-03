@@ -61,10 +61,9 @@ namespace FourtitudeMiddleware.Services
             return base64Result == signature;
         }
 
-        public GenerateSignatureResponse GenerateSignature(Dictionary<string, string> parameters, string timestamp = null)
+        public GenerateSignatureResponse GenerateSignature(Dictionary<string, string> parameters)
         {
-            if (string.IsNullOrEmpty(timestamp))
-                timestamp = DateTime.UtcNow.ToString("o");
+            var timestamp = DateTime.UtcNow.ToString("o");
 
             // Required keys
             parameters.TryGetValue(DictionaryKeys.SignaturePartnerKey, out var partnerKey);

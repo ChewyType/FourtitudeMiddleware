@@ -41,10 +41,9 @@ namespace FourtitudeMiddleware.Dtos
                     if (request.Items != null && request.Items.Any())
                     {
                         var sum = request.Items.Sum(i => i.UnitPrice * i.Qty);
-                        var (totalDiscount, finalAmount, _) = NumberHelpers.NumberHelper.CalculateDiscount(sum);
-                        if (request.TotalAmount != finalAmount)
+                        if (sum != request.TotalAmount)
                         {
-                            context.AddFailure("Invalid Total Amount.", $"Only applicable when itemDetails is provided. The total value stated in itemDetails array minus discount should equal value in totalamount. Expected: {finalAmount}, Provided: {request.TotalAmount}");
+                            context.AddFailure("Invalid Total Amount.", "Only applicable when itemDetails is provided. The total value stated in itemDetails array not equal to value in totalamount.");
                         }
                     }
                 });
