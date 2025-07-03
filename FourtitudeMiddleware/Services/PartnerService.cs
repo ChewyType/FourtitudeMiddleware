@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using FourtitudeMiddleware.Dtos;
 
 namespace FourtitudeMiddleware.Services
 {
@@ -57,6 +58,37 @@ namespace FourtitudeMiddleware.Services
             {
                 return false;
             }
+        }
+
+        public GenerateSignatureResponse GenerateSignature(Dictionary<string, string> parameters, string timestamp = null)
+        {
+            if (string.IsNullOrEmpty(timestamp))
+                timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+
+            // Sort parameters alphabetically by name
+            var orderedParams = parameters
+                .OrderBy(p => p.Key)
+                .ToDictionary(p => p.Key, p => p.Value);
+
+            // Concatenate all parameter values in specified order
+            var concatenated = string.Join("", orderedParams.Values) + timestamp;
+
+            // Compute SHA-256 hash
+            using var sha256 = SHA256.Create();
+            byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(concatenated));
+
+            // Convert to lowercase hexadecimal
+            var hexHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+
+            // Convert hex hash to Base64
+            byte[] hexBytes = Encoding.UTF8.GetBytes(hexHash);
+            string base64Result = Convert.ToBase64String(hexBytes);
+
+            return new GenerateSignatureResponse
+            {
+                Signature = base64Result,
+                Timestamp = timestamp
+            };
         }
     }
 }
