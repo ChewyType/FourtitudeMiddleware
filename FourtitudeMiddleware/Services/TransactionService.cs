@@ -73,10 +73,18 @@ namespace FourtitudeMiddleware.Services
                     return response;
                 }
 
-                // Process transaction (in a real implementation, this would involve more business logic)
-                long totalAmount = request.TotalAmount;
+                // Calculate totalAmount from items if provided
+                long totalAmount = 0;
+                if (request.Items != null && request.Items.Any())
+                {
+                    totalAmount = request.Items.Sum(i => i.UnitPrice * i.Qty);
+                }
+                else
+                {
+                    totalAmount = request.TotalAmount;
+                }
 
-                var (totalDiscount, finalAmount, totalDiscountPercent) = NumberHelper.CalculateDiscount(totalAmount);
+                var (totalDiscount, finalAmount) = NumberHelper.CalculateDiscount(totalAmount);
                 response.TotalAmount = totalAmount;
                 response.TotalDiscount = totalDiscount;
                 response.FinalAmount = finalAmount;

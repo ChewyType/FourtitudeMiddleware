@@ -41,7 +41,7 @@ namespace FourtitudeMiddleware.Dtos
                     if (request.Items != null && request.Items.Any())
                     {
                         var sum = request.Items.Sum(i => i.UnitPrice * i.Qty);
-                        var (totalDiscount, finalAmount, _) = NumberHelpers.NumberHelper.CalculateDiscount(sum);
+                        var (totalDiscount, finalAmount) = NumberHelpers.NumberHelper.CalculateDiscount(sum);
                         if (request.TotalAmount != finalAmount)
                         {
                             context.AddFailure("Invalid Total Amount.", $"Only applicable when itemDetails is provided. The total value stated in itemDetails array minus discount should equal value in totalamount. Expected: {finalAmount}, Provided: {request.TotalAmount}");
@@ -50,26 +50,26 @@ namespace FourtitudeMiddleware.Dtos
                 });
 
             // Timestamp must be within ±5 minutes of server time
-            //RuleFor(x => x.Timestamp)
-            //    .Custom((timestamp, context) =>
-            //    {
-            //        if (!string.IsNullOrEmpty(timestamp))
-            //        {
-            //            if (DateTime.TryParse(timestamp, out var parsedTimestamp))
-            //            {
-            //                var now = DateTime.UtcNow;
-            //                var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
-            //                if (diff > 5)
-            //                {
-            //                    context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:dd MMM yyyy HH:mm:ss}");
-            //                }
-            //            }
-            //            else
-            //            {
-            //                context.AddFailure("timestamp", "Invalid timestamp format.");
-            //            }
-            //        }
-            //    });
+            RuleFor(x => x.Timestamp)
+                .Custom((timestamp, context) =>
+                {
+                    if (!string.IsNullOrEmpty(timestamp))
+                    {
+                        if (DateTime.TryParse(timestamp, out var parsedTimestamp))
+                        {
+                            var now = DateTime.UtcNow;
+                            var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
+                            if (diff > 5)
+                            {
+                                context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:dd MMM yyyy HH:mm:ss}");
+                            }
+                        }
+                        else
+                        {
+                            context.AddFailure("timestamp", "Invalid timestamp format.");
+                        }
+                    }
+                });
 
             RuleForEach(x => x.Items).SetValidator(new ItemRequestValidator());
         }
