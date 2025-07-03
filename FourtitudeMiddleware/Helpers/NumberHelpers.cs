@@ -28,6 +28,50 @@
                 }
                 return true;
             }
+
+            public static (long totalDiscount, long finalAmount, double totalDiscountPercent) CalculateDiscount(long totalAmount)
+            {
+                double baseDiscountPercent = 0;
+                if (totalAmount >= 200 && totalAmount <= 500)
+                {
+                    baseDiscountPercent = 0.05;
+                }
+                else if (totalAmount >= 501 && totalAmount <= 800)
+                {
+                    baseDiscountPercent = 0.07;
+                }
+                else if (totalAmount >= 801 && totalAmount <= 1200)
+                {
+                    baseDiscountPercent = 0.10;
+                }
+                else if (totalAmount > 1200)
+                {
+                    baseDiscountPercent = 0.15;
+                }
+
+                double conditionalDiscountPercent = 0;
+                // Prime number check (above 500)
+                if (totalAmount > 500 && NumberHelper.IsPrime(totalAmount))
+                {
+                    conditionalDiscountPercent += 0.08;
+                }
+                // Ends with 5 and above 900
+                if (totalAmount > 900 && totalAmount % 10 == 5)
+                {
+                    conditionalDiscountPercent += 0.10;
+                }
+
+                double totalDiscountPercent = baseDiscountPercent + conditionalDiscountPercent;
+                if (totalDiscountPercent > 0.20)
+                {
+                    totalDiscountPercent = 0.20;
+                }
+
+                long totalDiscount = (long)Math.Round(totalAmount * totalDiscountPercent);
+                long finalAmount = totalAmount - totalDiscount;
+
+                return (totalDiscount, finalAmount, totalDiscountPercent);
+            }
         }
     }
 }

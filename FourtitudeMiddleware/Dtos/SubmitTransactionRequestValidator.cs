@@ -1,4 +1,5 @@
 using FluentValidation;
+using FourtitudeMiddleware.Helpers;
 using System;
 using System.Linq;
 
@@ -33,16 +34,17 @@ namespace FourtitudeMiddleware.Dtos
                 .GreaterThan(0)
                 .WithMessage("totalamount must be greater than 0.");
 
-            // If items are provided, totalamount must match sum of itemDetails
+            // If items are provided, totalamount must match sum of itemDetails minus discount
             RuleFor(x => x)
                 .Custom((request, context) =>
                 {
                     if (request.Items != null && request.Items.Any())
                     {
                         var sum = request.Items.Sum(i => i.UnitPrice * i.Qty);
-                        if (sum != request.TotalAmount)
+                        var (totalDiscount, finalAmount, _) = NumberHelpers.NumberHelper.CalculateDiscount(sum);
+                        if (request.TotalAmount != finalAmount)
                         {
-                            context.AddFailure("Invalid Total Amount.", "Only applicable when itemDetails is provided. The total value stated in itemDetails array not equal to value in totalamount.");
+                            context.AddFailure("Invalid Total Amount.", $"Only applicable when itemDetails is provided. The total value stated in itemDetails array minus discount should equal value in totalamount. Expected: {finalAmount}, Provided: {request.TotalAmount}");
                         }
                     }
                 });

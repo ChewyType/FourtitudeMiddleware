@@ -18,12 +18,12 @@ namespace FourtitudeMiddleware.Tests
         public void ValidatePartner_ValidCredentials_ReturnsTrue()
         {
             // Arrange
-            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
             var password = "FAKEPASSWORD1234";
             var encodedPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
 
             // Act
-            var result = _partnerService.ValidatePartner(partnerKey, encodedPassword);
+            var result = _partnerService.ValidatePartner(partnerRefNo, encodedPassword);
 
             // Assert
             Assert.IsTrue(result);
@@ -33,12 +33,12 @@ namespace FourtitudeMiddleware.Tests
         public void ValidatePartner_InvalidPartnerKey_ReturnsFalse()
         {
             // Arrange
-            var partnerKey = "INVALID";
+            var partnerRefNo = "INVALID";
             var password = "FAKEPASSWORD1234";
             var encodedPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
 
             // Act
-            var result = _partnerService.ValidatePartner(partnerKey, encodedPassword);
+            var result = _partnerService.ValidatePartner(partnerRefNo, encodedPassword);
 
             // Assert
             Assert.IsFalse(result);
@@ -48,12 +48,12 @@ namespace FourtitudeMiddleware.Tests
         public void ValidatePartner_InvalidPassword_ReturnsFalse()
         {
             // Arrange
-            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
             var password = "WRONGPASSWORD";
             var encodedPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password));
 
             // Act
-            var result = _partnerService.ValidatePartner(partnerKey, encodedPassword);
+            var result = _partnerService.ValidatePartner(partnerRefNo, encodedPassword);
 
             // Assert
             Assert.IsFalse(result);
@@ -63,11 +63,11 @@ namespace FourtitudeMiddleware.Tests
         public void ValidatePartner_InvalidBase64_ReturnsFalse()
         {
             // Arrange
-            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
             var encodedPassword = "not_base64";
 
             // Act
-            var result = _partnerService.ValidatePartner(partnerKey, encodedPassword);
+            var result = _partnerService.ValidatePartner(partnerRefNo, encodedPassword);
 
             // Assert
             Assert.IsFalse(result);

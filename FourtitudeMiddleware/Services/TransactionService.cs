@@ -9,7 +9,6 @@ namespace FourtitudeMiddleware.Services
     public class TransactionService : ITransactionService
     {
         private readonly IPartnerService _partnerService;
-        private readonly ILogger<TransactionService> _logger;
         private readonly IValidator<SubmitTransactionRequest> _validator;
 
         public TransactionService(
@@ -25,10 +24,7 @@ namespace FourtitudeMiddleware.Services
             var response = new SubmitTransactionResponse();
             try
             {
-                // Clone and encrypt password for logging
-                var logRequest = CloneAndEncryptPassword(request);
-
-                // Validate request using FluentValidation
+                 // Validate request using FluentValidation
                 var validationResult = _validator.Validate(request);
                 if (!validationResult.IsValid)
                 {
@@ -80,7 +76,10 @@ namespace FourtitudeMiddleware.Services
                 // Process transaction (in a real implementation, this would involve more business logic)
                 long totalAmount = request.TotalAmount;
 
-                ApplyDiscounts(response, totalAmount);
+                var (totalDiscount, finalAmount, totalDiscountPercent) = NumberHelper.CalculateDiscount(totalAmount);
+                response.TotalAmount = totalAmount;
+                response.TotalDiscount = totalDiscount;
+                response.FinalAmount = finalAmount;
                 response.Result = 1;
                 return response;
             }
@@ -90,76 +89,6 @@ namespace FourtitudeMiddleware.Services
                 response.ResultMessage = "Internal server error";
                 return response;
             }
-        }
-
-        // Helper method for discount calculation
-        private void ApplyDiscounts(SubmitTransactionResponse response, long totalAmount)
-        {
-            double baseDiscountPercent = 0;
-            if (totalAmount >= 200 && totalAmount <= 500)
-            {
-                baseDiscountPercent = 0.05;
-            }
-            else if (totalAmount >= 501 && totalAmount <= 800)
-            {
-                baseDiscountPercent = 0.07;
-            }
-            else if (totalAmount >= 801 && totalAmount <= 1200)
-            {
-                baseDiscountPercent = 0.10;
-            }
-            else if (totalAmount > 1200)
-            {
-                baseDiscountPercent = 0.15;
-            }
-
-            double conditionalDiscountPercent = 0;
-            // Prime number check (above 500)
-            if (totalAmount > 500 && NumberHelper.IsPrime(totalAmount))
-            {
-                conditionalDiscountPercent += 0.08;
-            }
-            // Ends with 5 and above 900
-            if (totalAmount > 900 && totalAmount % 10 == 5)
-            {
-                conditionalDiscountPercent += 0.10;
-            }
-
-            double totalDiscountPercent = baseDiscountPercent + conditionalDiscountPercent;
-            if (totalDiscountPercent > 0.20)
-            {
-                totalDiscountPercent = 0.20;
-            }
-
-            long totalDiscount = (long)Math.Round(totalAmount * totalDiscountPercent);
-            long finalAmount = totalAmount - totalDiscount;
-
-            response.TotalAmount = totalAmount;
-            response.TotalDiscount = totalDiscount;
-            response.FinalAmount = finalAmount;
-        }
-
-        // Helper method to clone request and encrypt password for logging
-        private SubmitTransactionRequest CloneAndEncryptPassword(SubmitTransactionRequest request)
-        {
-            return new SubmitTransactionRequest
-            {
-                PartnerKey = request.PartnerKey,
-                PartnerRefNo = request.PartnerRefNo,
-                PartnerPassword = EncryptForLog(request.PartnerPassword),
-                TotalAmount = request.TotalAmount,
-                Items = request.Items,
-                Timestamp = request.Timestamp,
-                Sig = request.Sig
-            };
-        }
-
-        // Simple encryption for logging (for demonstration, use a real encryption in production)
-        private string EncryptForLog(string plainText)
-        {
-            if (string.IsNullOrEmpty(plainText)) return string.Empty;
-            var plainBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
-            return Convert.ToBase64String(plainBytes.Reverse().ToArray()); // Simple reverse + base64
         }
     }
 } 
