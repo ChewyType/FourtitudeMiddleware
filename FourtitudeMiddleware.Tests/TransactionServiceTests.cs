@@ -158,7 +158,7 @@ namespace FourtitudeMiddleware.Tests
         [TestCase(600, 42, 558)] // 7% discount
         [TestCase(1000, 100, 900)] // 10% discount
         [TestCase(1300, 195, 1105)] // 15% discount
-        [TestCase(997, 200, 797)] // 10% base + 10% ends with 5 (not prime, not ends with 5, but let's check logic)
+        [TestCase(997, 179, 818)] // 10% base + 8% prime = 18%
         [TestCase(1005, 201, 804)] // 10% base + 10% ends with 5
         public void ProcessTransaction_DiscountCalculation_Works(long totalAmount, long expectedDiscount, long expectedFinal)
         {
