@@ -16,6 +16,7 @@ namespace FourtitudeMiddleware.Controllers
             _partnerService = partnerService;
         }
 
+        // For testing signature validation
         [HttpPost("generatesignature")]
         public ActionResult<GenerateSignatureResponse> GenerateSignature([FromBody] GenerateSignatureRequest request)
         {
