@@ -29,39 +29,64 @@
                 return true;
             }
 
-            public static (long totalDiscount, long finalAmount, double totalDiscountPercent) CalculateDiscount(long totalAmount)
+            // updated condition to calculate base on cent amount
+            private static double CalculateBaseDiscountPercent(long totalAmount)
             {
                 double baseDiscountPercent = 0;
-                if (totalAmount >= 200 && totalAmount <= 500)
+
+                if (totalAmount < 20000)
                 {
-                    baseDiscountPercent = 0.05;
-                }
-                else if (totalAmount >= 501 && totalAmount <= 800)
-                {
-                    baseDiscountPercent = 0.07;
-                }
-                else if (totalAmount >= 801 && totalAmount <= 1200)
-                {
-                    baseDiscountPercent = 0.10;
-                }
-                else if (totalAmount > 1200)
-                {
-                    baseDiscountPercent = 0.15;
+                    return baseDiscountPercent;
                 }
 
+                if (totalAmount >= 20000 && totalAmount <= 50000)
+                {
+                    return baseDiscountPercent = 0.05;
+                }
+
+                if (totalAmount >= 50100 && totalAmount <= 80000)
+                {
+                    return baseDiscountPercent = 0.07;
+                }
+                
+                if (totalAmount >= 80100 && totalAmount <= 120000)
+                {
+                    return baseDiscountPercent = 0.10;
+                }
+
+
+                return baseDiscountPercent = 0.15;
+            }
+
+            // updated condition to calculate base on cent amount
+            private static double ConditionalDiscountPercent(long totalAmount)
+            {
                 double conditionalDiscountPercent = 0;
-                // Prime number check (above 500)
-                if (totalAmount > 500 && NumberHelper.IsPrime(totalAmount))
+                // Prime number check (above RM500)
+                if (totalAmount > 50000 && IsPrime(totalAmount))
                 {
                     conditionalDiscountPercent += 0.08;
                 }
-                // Ends with 5 and above 900
-                if (totalAmount > 900 && totalAmount % 10 == 5)
+
+                // Ends with 5 and above RM900
+                if (totalAmount > 90000 && totalAmount % 10 == 5)
                 {
                     conditionalDiscountPercent += 0.10;
                 }
 
+                return conditionalDiscountPercent;
+            }
+
+            public static (long totalDiscount, long finalAmount, double totalDiscountPercent) CalculateDiscount(long totalAmount)
+            {
+
+                double baseDiscountPercent = CalculateBaseDiscountPercent(totalAmount);
+
+                double conditionalDiscountPercent = ConditionalDiscountPercent(totalAmount);
+
                 double totalDiscountPercent = baseDiscountPercent + conditionalDiscountPercent;
+
+                //Calculate total discount percent, ensure it does not exceed 20%
                 if (totalDiscountPercent > 0.20)
                 {
                     totalDiscountPercent = 0.20;
