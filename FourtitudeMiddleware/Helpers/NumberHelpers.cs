@@ -63,13 +63,13 @@
             {
                 double conditionalDiscountPercent = 0;
                 // Prime number check (above RM500)
-                if (totalAmount > 50000 && IsPrime(totalAmount))
+                if (totalAmount > 50000 && IsPrime(totalAmount/100))
                 {
                     conditionalDiscountPercent += 0.08;
                 }
 
                 // Ends with 5 and above RM900
-                if (totalAmount > 90000 && totalAmount % 10 == 5)
+                if (totalAmount > 90000 && totalAmount/100 % 10 == 5)
                 {
                     conditionalDiscountPercent += 0.10;
                 }

@@ -6,6 +6,7 @@ using Moq;
 using NUnit.Framework;
 using FourtitudeMiddleware.Dtos;
 using FourtitudeMiddleware.Services;
+using System.Text;
 
 namespace FourtitudeMiddleware.Tests
 {
@@ -24,18 +25,36 @@ namespace FourtitudeMiddleware.Tests
             _transactionService = new TransactionService(_partnerServiceMock.Object, _validatorMock.Object);
         }
 
+        private string GenerateValidSignature(string partnerKey, string partnerRefNo, long totalAmount, string partnerPassword, string timestamp)
+        {
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var concatenated = string.Concat(timestamp, partnerKey, partnerRefNo, totalAmount.ToString(), encodedPassword);
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(concatenated));
+            var hexHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            var hexBytes = Encoding.UTF8.GetBytes(hexHash);
+            return Convert.ToBase64String(hexBytes);
+        }
+
         [Test]
         public void ProcessTransaction_ValidRequest_ReturnsSuccess()
         {
             // Arrange
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var totalAmount = 10000L;
+            var timestamp = DateTime.UtcNow.ToString("o");
+            var sig = GenerateValidSignature(partnerKey, partnerRefNo, totalAmount, partnerPassword, timestamp);
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
-                TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-                Sig = "validsig"
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
+                TotalAmount = totalAmount,
+                Timestamp = timestamp,
+                Sig = sig
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
             _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(true);
@@ -48,22 +67,29 @@ namespace FourtitudeMiddleware.Tests
             Assert.Multiple(() =>
             {
                 Assert.That(result.Result, Is.EqualTo(1));
-                Assert.That(result.TotalAmount, Is.EqualTo(1000));
-                Assert.That(result.FinalAmount, Is.LessThan(1000));
+                Assert.That(result.TotalAmount, Is.EqualTo(10000));
+                Assert.That(result.FinalAmount, Is.EqualTo(10000));
             });
         }
 
         [Test]
         public void ProcessTransaction_InvalidPartnerCredentials_ReturnsAccessDenied()
         {
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = "invalid";
+            var totalAmount = 10000L;
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            var sig = GenerateValidSignature(partnerKey, partnerRefNo, totalAmount, partnerPassword, timestamp);
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = "invalid",
-                TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-                Sig = "validsig"
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
+                TotalAmount = totalAmount,
+                Timestamp = timestamp,
+                Sig = sig
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
             _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(false);
@@ -80,14 +106,21 @@ namespace FourtitudeMiddleware.Tests
         [Test]
         public void ProcessTransaction_InvalidTimestamp_ReturnsInvalidTimestamp()
         {
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var totalAmount = 10000L;
+            var timestamp = "not-a-date";
+            var sig = "invalidsig";
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
-                TotalAmount = 1000,
-                Timestamp = "not-a-date",
-                Sig = "validsig"
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
+                TotalAmount = totalAmount,
+                Timestamp = timestamp,
+                Sig = sig
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
             _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(true);
@@ -104,14 +137,21 @@ namespace FourtitudeMiddleware.Tests
         [Test]
         public void ProcessTransaction_InvalidSignature_ReturnsInvalidSignature()
         {
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var totalAmount = 10000L;
+            var timestamp = DateTime.UtcNow.ToString("o");
+            var sig = "invalidsig";
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
-                TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-                Sig = "invalidsig"
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
+                TotalAmount = totalAmount,
+                Timestamp = timestamp,
+                Sig = sig
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
             _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(true);
@@ -129,14 +169,21 @@ namespace FourtitudeMiddleware.Tests
         [Test]
         public void ProcessTransaction_ValidationFails_ReturnsValidationError()
         {
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var totalAmount = 10000L;
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            var sig = GenerateValidSignature(partnerKey, partnerRefNo, totalAmount, partnerPassword, timestamp);
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
-                TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-                Sig = "validsig"
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
+                TotalAmount = totalAmount,
+                Timestamp = timestamp,
+                Sig = sig
             };
             var validationResult = new FluentValidation.Results.ValidationResult(new[]
             {
@@ -153,25 +200,32 @@ namespace FourtitudeMiddleware.Tests
             });
         }
 
-        [TestCase(100, 0, 100)]
-        [TestCase(300, 15, 285)] // 5% discount
-        [TestCase(600, 42, 558)] // 7% discount
-        [TestCase(1000, 100, 900)] // 10% discount
-        [TestCase(1300, 195, 1105)] // 15% discount
-        [TestCase(997, 179, 818)] // 10% base + 8% prime = 18%
-        [TestCase(1005, 201, 804)] // 10% base + 10% ends with 5
+        [TestCase(10000, 0, 10000)] // RM100, no discount
+        [TestCase(30000, 1500, 28500)] // RM300, 5% discount
+        [TestCase(60000, 4200, 55800)] // RM600, 7% discount
+        [TestCase(100000, 10000, 90000)] // RM1000, 10% discount
+        [TestCase(130000, 19500, 110500)] // RM1300, 15% discount
+        [TestCase(99700, 17946, 81754)] // RM997, 10% base + 8% prime = 18%
+        [TestCase(100500, 20100, 80400)] // RM1005, 10% base + 10% ends with 5 = 20%
         public void ProcessTransaction_DiscountCalculation_Works(long totalAmount, long expectedDiscount, long expectedFinal)
         {
             // Arrange
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var partnerPassword = "FAKEPASSWORD1234";
+            var encodedPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(partnerPassword));
+            var timestamp = DateTime.UtcNow.ToString("o");
+            var sig = GenerateValidSignature(partnerKey, partnerRefNo, totalAmount, partnerPassword, timestamp);
             var request = new SubmitTransactionRequest
             {
-                PartnerKey = "FG-00001",
-                PartnerRefNo = "FG-00001",
-                PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
+                PartnerKey = partnerKey,
+                PartnerRefNo = partnerRefNo,
+                PartnerPassword = encodedPassword,
                 TotalAmount = totalAmount,
-                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
-                Sig = "validsig"
+                Timestamp = timestamp,
+                Sig = sig
             };
+
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
             _partnerServiceMock.Setup(p => p.ValidatePartner(request.PartnerRefNo, request.PartnerPassword)).Returns(true);
             _partnerServiceMock.Setup(p => p.ValidateSignature(It.IsAny<Dictionary<string, string>>(), It.IsAny<string>(), request.Sig)).Returns(true);
