@@ -77,22 +77,22 @@ namespace FourtitudeMiddleware.Tests
         public void ValidateSignature_ValidSignature_ReturnsTrue()
         {
             // Arrange
+            var partnerKey = "FG-00001";
+            var partnerRefNo = "FG-00001";
+            var totalAmount = 10000L;
+
             var parameters = new Dictionary<string, string>
             {
-                { "a", "1" },
-                { "b", "2" }
+                { "partnerkey", partnerKey },
+                { "partnerrefno", partnerRefNo },
+                { "totalamount", totalAmount.ToString() }
             };
-            var timestamp = "20240101";
-            // Concatenate values in order: "1" + "2" + timestamp
-            var concatenated = "12" + timestamp;
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(concatenated));
-            var hexHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-            var hexBytes = System.Text.Encoding.UTF8.GetBytes(hexHash);
-            var signature = Convert.ToBase64String(hexBytes);
+
+            // Use the service to generate the signature
+            var signature = _partnerService.GenerateSignature(parameters);
 
             // Act
-            var result = _partnerService.ValidateSignature(parameters, timestamp, signature);
+            var result = _partnerService.ValidateSignature(parameters, signature.Timestamp, signature.Signature);
 
             // Assert
             Assert.IsTrue(result);
