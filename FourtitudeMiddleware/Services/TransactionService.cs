@@ -63,7 +63,7 @@ namespace FourtitudeMiddleware.Services
                     sigParams.Add("items", JsonSerializer.Serialize(request.Items));
                 }
 
-                string sigTimestamp = DateTime.Parse(request.Timestamp).ToUniversalTime().ToString("o");
+                string sigTimestamp = DateTime.Parse(request.Timestamp).ToUniversalTime().ToString("yyyyMMddHHmmss");
 
                 // Validate signature
                 if (!_partnerService.ValidateSignature(sigParams, sigTimestamp, request.Sig))

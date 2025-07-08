@@ -63,7 +63,7 @@ namespace FourtitudeMiddleware.Services
 
         public GenerateSignatureResponse GenerateSignature(Dictionary<string, string> parameters)
         {
-            var timestamp = DateTime.UtcNow.ToString("o");
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
 
             // Required keys
             parameters.TryGetValue(DictionaryKeys.SignaturePartnerKey, out var partnerKey);

@@ -34,7 +34,7 @@ namespace FourtitudeMiddleware.Tests
                 PartnerRefNo = "FG-00001",
                 PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
                 TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 Sig = "validsig"
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
@@ -62,7 +62,7 @@ namespace FourtitudeMiddleware.Tests
                 PartnerRefNo = "FG-00001",
                 PartnerPassword = "invalid",
                 TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 Sig = "validsig"
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
@@ -110,7 +110,7 @@ namespace FourtitudeMiddleware.Tests
                 PartnerRefNo = "FG-00001",
                 PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
                 TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 Sig = "invalidsig"
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
@@ -135,7 +135,7 @@ namespace FourtitudeMiddleware.Tests
                 PartnerRefNo = "FG-00001",
                 PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
                 TotalAmount = 1000,
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 Sig = "validsig"
             };
             var validationResult = new FluentValidation.Results.ValidationResult(new[]
@@ -169,7 +169,7 @@ namespace FourtitudeMiddleware.Tests
                 PartnerRefNo = "FG-00001",
                 PartnerPassword = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("FAKEPASSWORD1234")),
                 TotalAmount = totalAmount,
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 Sig = "validsig"
             };
             _validatorMock.Setup(v => v.Validate(request)).Returns(new FluentValidation.Results.ValidationResult());
