@@ -12,19 +12,21 @@ namespace FourtitudeMiddleware.Dtos
             // Required fields with custom error messages
             RuleFor(x => x.PartnerKey)
                 .NotEmpty()
-                .WithMessage("partnerkey is required.");
+                .WithMessage("partnerkey is required.")
+                .MaximumLength(50)
+                .WithMessage("partnerkey must not exceed 50 characters.");
 
             RuleFor(x => x.PartnerRefNo)
                 .NotEmpty()
-                .WithMessage("partnerrefno is required.");
+                .WithMessage("partnerrefno is required.")
+                .MaximumLength(50)
+                .WithMessage("partnerrefno must not exceed 50 characters.");
 
             RuleFor(x => x.PartnerPassword)
                 .NotEmpty()
-                .WithMessage("partnerpassword is required.");
-
-            RuleFor(x => x.Timestamp)
-                .NotEmpty()
-                .WithMessage("timestamp is required.");
+                .WithMessage("partnerpassword is required.")
+                .MaximumLength(50)
+                .WithMessage("partnerpassword must not exceed 50 characters.");
 
             RuleFor(x => x.Sig)
                 .NotEmpty()
@@ -49,26 +51,29 @@ namespace FourtitudeMiddleware.Dtos
                 });
 
             // Timestamp must be within ±5 minutes of server time
-            //RuleFor(x => x.Timestamp)
-            //    .Custom((timestamp, context) =>
-            //    {
-            //        if (!string.IsNullOrEmpty(timestamp))
-            //        {
-            //            if (DateTime.TryParse(timestamp, out var parsedTimestamp))
-            //            {
-            //                var now = DateTime.UtcNow;
-            //                var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
-            //                if (diff > 5)
-            //                {
-            //                    context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:dd MMM yyyy HH:mm:ss}");
-            //                }
-            //            }
-            //            else
-            //            {
-            //                context.AddFailure("timestamp", "Invalid timestamp format.");
-            //            }
-            //        }
-            //    });
+            RuleFor(x => x.Timestamp)
+                .Custom((timestamp, context) =>
+                {
+                    const string iso8601Format = "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'";
+                    if (string.IsNullOrEmpty(timestamp))
+                    {
+                        context.AddFailure("timestamp", "timestamp is required.");
+                        return;
+                    }
+
+                    if (!DateTime.TryParseExact(timestamp, iso8601Format, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var parsedTimestamp))
+                    {
+                        context.AddFailure("timestamp", $"Invalid timestamp format. Must be ISO 8601 UTC (e.g., 2024-08-15T02:11:22.0000000Z)");
+                        return;
+                    }
+
+                    var now = DateTime.UtcNow;
+                    var diff = Math.Abs((now - parsedTimestamp.ToUniversalTime()).TotalMinutes);
+                    if (diff > 5)
+                    {
+                        context.AddFailure("Expired.", $"Provided timestamp exceed server time ±5min. The valid time will be ±5 Min of the server time. Server time: {now:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+                    }
+                });
 
             RuleForEach(x => x.Items).SetValidator(new ItemRequestValidator());
         }
